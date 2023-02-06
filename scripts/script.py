@@ -113,6 +113,8 @@ def main():
     answer = input("Are you sure you want to create a folder with the name: " + foldername + "? (y/n): ")
     if answer == "n":
         sys.exit(0)
+    
+    
 
     #create foldername
     os.mkdir(os.path.join(dir, foldername))
