@@ -6,4 +6,4 @@
 ECE 3310 - Electromagnetics
 ---------------------------------------
 
-* Link to: [TODO](TODO.md) 
+Collection of homework assignments for ECE 3310 - Electromagnetics
