@@ -11,6 +11,16 @@ if len(sys.argv) < 2:
 filename = sys.argv[1]
 
 def read_data(filename):
+    #read line 6 from the data, read only the number values
+    with open(filename) as f:
+        for i, line in enumerate(f):
+            if i == 6:
+                seg = line.split()
+                break
+    start_freq = float(seg[1])
+    stop_freq = float(seg[2])
+    num_points = int(seg[3]) -1
+
     #reads data from file converts to numpy 
     real_str = pd.read_csv(filename, skiprows=9,skipfooter=2, sep=',', usecols=[0], engine='python')
     img_str = pd.read_csv(filename, skiprows=9,skipfooter=2, sep=',', usecols=[1], engine='python')
@@ -19,7 +29,7 @@ def read_data(filename):
     #convert to 1d array
     real = real.flatten()
     img = img.flatten()
-    return real, img
+    return real, img, start_freq, stop_freq, num_points
 
 def s11_computation(real, img):
     s11 = np.sqrt(np.power(real,2) + np.power(img,2))
@@ -58,32 +68,33 @@ def fig1_data():
     plt.savefig("fig1.png")
     plt.show()
 
-def fig2_plt(db, gamma, vswr):
+def fig2_plt(db, gamma, vswr, start_f, end_f, points):
+    #find the value of the minimum value in the array
+    min_value_db = np.amin(db)
     #create title
-    plt.title('')
+    plt.title('Return Loss vs Frequency')
     #turn on legend for each line
     plt.xlabel('Frequency (MHz)')
     plt.ylabel('S11 (dB)')
     #y axis go in steps of 10
-    plt.ylim(-25,0)
+    #plt.ylim(-25,0)
     plt.grid()
-    plt.plot(np.linspace(2,3,200),db)
-    plt.xlim(2,3)
+    plt.plot(np.linspace(start_f,end_f,points),db)
+    #plt.xlim(2,3)
     #y axis go in steps of .5
-    plt.yticks(np.arange(-25, 0, step=2.5))
+    plt.yticks(np.arange(min_value_db, 0, step=2.5))
     #x axis go in steps of .1
-    plt.xticks(np.arange(2, 3.1, step=0.1))
+    #plt.xticks(np.arange(, 3.1, step=0.1))
     #add a horizontal line at -10 dB dotted line
     plt.axhline(y=-10, color='black', linestyle='--', linewidth=1)
     #find the idx position where the plot crosses -10 dB
     idx = np.argwhere(np.diff(np.sign(db + 10))).flatten()
-    #add a vertical line where the plot crosses -10 dB
-    plt.axvline(x=2.174, color='black', linestyle='--', linewidth=1)
-    plt.axvline(x=2.915, color='black', linestyle='--', linewidth=1)
+    
     #add gamma and vswr in a box
-    plt.text(2.2, -15, 'Gamma = ' + str(gamma), bbox=dict(facecolor='white', alpha=0.5))
-    plt.text(2.2, -17, 'VSWR = ' + str(vswr), bbox=dict(facecolor='white', alpha=0.5))
-    plt.savefig("fig2.png")
+    plt.text(start_f+10, min_value_db, 'Gamma = ' + str(gamma), bbox=dict(facecolor='white', alpha=0.5))
+    plt.text(start_f+10, min_value_db+2, 'VSWR = ' + str(vswr), bbox=dict(facecolor='white', alpha=0.5))
+    plt.savefig(filename[:-3] + ".png")
+    
     plt.show()
 
 def find_gamma(db):    
@@ -91,16 +102,33 @@ def find_gamma(db):
 
 def find_vswr(gamma):
     return (1+gamma)/(1-gamma)
+
+def vswr_freq(real, img, start_f, end_f, points):
+    gamma_calc = np.sqrt(np.power(real,2) + np.power(img,2))
+    vswr = vswr_computation(gamma_calc)
+    plt.title('VSWR vs Frequency')
+    plt.xlabel('Frequency (MHz)')
+    plt.ylabel('VSWR')
+    plt.grid()
+    plt.plot(np.linspace(start_f,end_f,points),vswr)
+    plt.savefig(filename[:-3] + "_vswr.png")
+    plt.show()
     
 def main():
     print('running plotting program')
     #fig1_data()
-    real, img = read_data(filename)
+    real, img, start_f, end_f, points = read_data(filename)
+    print('start frequency: ', start_f)
+    print('end frequency: ', end_f)
+    print('number of points: ', points)
+
     s11 = s11_computation(real, img)
     db = rl_computation(s11)
     gamma_value = find_gamma(db)
     vswr = find_vswr(gamma_value)
-    fig2_plt(db,gamma_value,vswr)
+    fig2_plt(db,gamma_value,vswr, start_f, end_f, points)
+    
+    vswr_freq(real, img, start_f, end_f, points)
 
 if __name__ == "__main__":
     main()
