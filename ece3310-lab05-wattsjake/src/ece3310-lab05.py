@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sys
+import skrf as rf
+
 
 if len(sys.argv) < 2:
     print("Usage:")
@@ -40,7 +42,7 @@ def rl_computation(s11):
     return db
 
 def vswr_computation(s11):
-    vswr = (1+s11)/(1-s11)
+    vswr = (1+np.abs(s11))/(1-np.abs(s11))
     return vswr
 
 def fig1_data():
@@ -91,8 +93,8 @@ def fig2_plt(db, gamma, vswr, start_f, end_f, points):
     idx = np.argwhere(np.diff(np.sign(db + 10))).flatten()
     
     #add gamma and vswr in a box
-    plt.text(start_f+10, min_value_db, 'Gamma = ' + str(gamma), bbox=dict(facecolor='white', alpha=0.5))
-    plt.text(start_f+10, min_value_db+2, 'VSWR = ' + str(vswr), bbox=dict(facecolor='white', alpha=0.5))
+    plt.text(start_f+6e8, min_value_db, 'Gamma = ' + str(gamma), bbox=dict(facecolor='white', alpha=0.5))
+    plt.text(start_f+6e8, min_value_db+2, 'VSWR = ' + str(vswr), bbox=dict(facecolor='white', alpha=0.5))
     plt.savefig(filename[:-3] + ".png")
     
     plt.show()
@@ -129,6 +131,10 @@ def main():
     fig2_plt(db,gamma_value,vswr, start_f, end_f, points)
     
     vswr_freq(real, img, start_f, end_f, points)
+
+    #graph the data onto a smith chart
+    
+
 
 if __name__ == "__main__":
     main()
